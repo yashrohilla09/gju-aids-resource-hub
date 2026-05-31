@@ -10,6 +10,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Master Stylesheet Link -->
     <link rel="stylesheet" href="style.css">
+    <!-- Firebase SDK Compat CDNs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+    <!-- Central Firebase Configuration -->
+    <script src="firebase-config.js"></script>
     <style>
         .login-wrapper {
             display: flex;
@@ -301,8 +308,11 @@
     <!-- Core Database & App Handler Scripts -->
     <script src="script.js"></script>
     <script>
-        document.addEventListener("DOMContentLoaded", () => {
+        document.addEventListener("DOMContentLoaded", async () => {
             initNavbar();
+            if (window.Database) {
+                await Database.init();
+            }
 
             // Load remembered credential if exists
             const rememberedUserId = localStorage.getItem("gju_remembered_admin");
@@ -323,39 +333,69 @@
                 const pass = document.getElementById("adminPassword").value;
                 const remember = document.getElementById("rememberMe").checked;
 
-                // Validate admin credentials
-                if (userId === "yashrohil07" && pass === "Yash@123") {
-                    // Remember Me logic
-                    if (remember) {
-                        localStorage.setItem("gju_remembered_admin", userId);
-                    } else {
-                        localStorage.removeItem("gju_remembered_admin");
-                    }
-
-                    // Create Session
-                    const session = {
-                        username: "yashrohil07",
-                        name: "Yash Rohil",
-                        role: "Admin",
-                        timestamp: Date.now()
-                    };
-                    localStorage.setItem("gju_admin_session", JSON.stringify(session));
-
-                    // Show visual success notification
-                    showToast("Login Successful! Accessing Admin Console...");
-
-                    setTimeout(() => {
-                        window.location.href = "admin-dashboard.html";
-                    }, 1000);
-                } else {
-                    // Fail credentials
-                    errorText.textContent = "Invalid User ID or Password. Authentication Rejected.";
-                    errorMsg.style.display = "flex";
+                if (window.isFirebaseInitialized) {
+                    // Translate User ID to standard Email address
+                    const email = userId.includes("@") ? userId : `${userId}@gju.edu`;
                     
-                    // Add shake animation
-                    const card = document.querySelector(".login-card");
-                    card.style.animation = "shake 0.4s ease";
-                    setTimeout(() => card.style.animation = "", 400);
+                    auth.signInWithEmailAndPassword(email, pass)
+                        .then((userCredential) => {
+                            if (remember) {
+                                localStorage.setItem("gju_remembered_admin", userId);
+                            } else {
+                                localStorage.removeItem("gju_remembered_admin");
+                            }
+                            
+                            // Save standard backup session token for safety
+                            const session = {
+                                username: userId,
+                                name: "Yash Rohil",
+                                role: "Admin",
+                                timestamp: Date.now()
+                            };
+                            localStorage.setItem("gju_admin_session", JSON.stringify(session));
+                            
+                            showToast("Login Successful! Accessing Admin Console...");
+                            setTimeout(() => {
+                                window.location.href = "admin-dashboard.html";
+                            }, 1000);
+                        })
+                        .catch((error) => {
+                            console.error("Firebase Auth Error:", error);
+                            errorText.textContent = "Firebase Authentication Failed: " + error.message;
+                            errorMsg.style.display = "flex";
+                            
+                            const card = document.querySelector(".login-card");
+                            card.style.animation = "shake 0.4s ease";
+                            setTimeout(() => card.style.animation = "", 400);
+                        });
+                } else {
+                    // OFFLINE MOCK FALLBACK MODE
+                    if (userId === "yashrohil07" && pass === "Yash@123") {
+                        if (remember) {
+                            localStorage.setItem("gju_remembered_admin", userId);
+                        } else {
+                            localStorage.removeItem("gju_remembered_admin");
+                        }
+
+                        const session = {
+                            username: "yashrohil07",
+                            name: "Yash Rohil",
+                            role: "Admin",
+                            timestamp: Date.now()
+                        };
+                        localStorage.setItem("gju_admin_session", JSON.stringify(session));
+
+                        showToast("Local Offline Sandbox Activated! Accessing Dashboard...");
+                        setTimeout(() => {
+                            window.location.href = "admin-dashboard.html";
+                        }, 1000);
+                    } else {
+                        errorText.textContent = "Offline Fallback: Invalid User ID or Password.";
+                        errorMsg.style.display = "flex";
+                        const card = document.querySelector(".login-card");
+                        card.style.animation = "shake 0.4s ease";
+                        setTimeout(() => card.style.animation = "", 400);
+                    }
                 }
             });
         });

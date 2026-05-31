@@ -252,15 +252,113 @@ function generateSyllabusPreview(subject, type) {
     }
 })();
 
-// 3. LocalStorage State Management Wrapper
+
+// 3. Centralized Firebase State Management Wrapper
+let ALL_RESOURCES = [];
+
 class Database {
-    static init() {
+    static async init() {
+        if (window.isFirebaseInitialized) {
+            try {
+                // 1. Fetch Curriculum from Firestore
+                const curDoc = await db.collection("curriculum").doc("default").get();
+                if (curDoc.exists) {
+                    CURRICULUM = curDoc.data().semesters;
+                } else {
+                    // Seed defaults if empty
+                    await db.collection("curriculum").doc("default").set({ semesters: CURRICULUM_DEFAULT });
+                    CURRICULUM = CURRICULUM_DEFAULT;
+                }
+
+                // 2. Fetch Resources from Firestore
+                const resSnap = await db.collection("resources").get();
+                ALL_RESOURCES = [];
+                resSnap.forEach(doc => {
+                    ALL_RESOURCES.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Seeding if Firestore is empty
+                if (ALL_RESOURCES.length === 0) {
+                    console.log("Firestore resources collection is empty. Seeding preloaded library...");
+                    for (let res of INITIAL_RESOURCES) {
+                        res.approved = true; // Auto approved for preloads
+                        // Generate a clean doc id or let Firestore assign one
+                        await db.collection("resources").add(res);
+                    }
+                    // Re-fetch seeded data
+                    const seedSnap = await db.collection("resources").get();
+                    seedSnap.forEach(doc => {
+                        ALL_RESOURCES.push({ id: doc.id, ...doc.data() });
+                    });
+                }
+                
+                // Cache locally for offline backup reference
+                localStorage.setItem("gju_curriculum_v2", JSON.stringify(CURRICULUM));
+                localStorage.setItem("gju_resource_hub_bsc_v2", JSON.stringify(ALL_RESOURCES));
+            } catch (err) {
+                console.error("Firebase Firestore fetch error, falling back to LocalStorage:", err);
+                this.fallbackToLocalStorage();
+            }
+        } else {
+            this.fallbackToLocalStorage();
+        }
+    }
+
+    static fallbackToLocalStorage() {
         if (!localStorage.getItem("gju_curriculum_v2")) {
             localStorage.setItem("gju_curriculum_v2", JSON.stringify(CURRICULUM_DEFAULT));
         }
         if (!localStorage.getItem("gju_resource_hub_bsc_v2")) {
             localStorage.setItem("gju_resource_hub_bsc_v2", JSON.stringify(INITIAL_RESOURCES));
         }
+        CURRICULUM = JSON.parse(localStorage.getItem("gju_curriculum_v2"));
+        ALL_RESOURCES = JSON.parse(localStorage.getItem("gju_resource_hub_bsc_v2"));
+    }
+
+    static getResources() {
+        return ALL_RESOURCES;
+    }
+
+    static async saveResources(resources) {
+        ALL_RESOURCES = resources;
+        localStorage.setItem("gju_resource_hub_bsc_v2", JSON.stringify(resources));
+    }
+
+    static async saveResource(resource) {
+        ALL_RESOURCES.push(resource);
+        if (window.isFirebaseInitialized) {
+            try {
+                const docId = resource.id;
+                const data = { ...resource };
+                delete data.id; // Strip local ID as we use it as document ID
+                await db.collection("resources").doc(docId).set(data);
+            } catch (err) {
+                console.error("Failed to write resource to Firestore:", err);
+            }
+        } else {
+            const dbLocal = JSON.parse(localStorage.getItem("gju_resource_hub_bsc_v2")) || [];
+            dbLocal.push(resource);
+            localStorage.setItem("gju_resource_hub_bsc_v2", JSON.stringify(dbLocal));
+        }
+    }
+
+    static getCurriculum() {
+        return CURRICULUM;
+    }
+
+    static async saveCurriculum(curriculum) {
+        CURRICULUM = curriculum;
+        localStorage.setItem("gju_curriculum_v2", JSON.stringify(curriculum));
+        if (window.isFirebaseInitialized) {
+            try {
+                await db.collection("curriculum").doc("default").set({ semesters: curriculum });
+            } catch (err) {
+                console.error("Failed to sync curriculum map to Firestore:", err);
+            }
+        }
+    }
+
+    static getUsers() {
         if (!localStorage.getItem("gju_users_v2")) {
             const defaultUsers = [
                 { id: "user-1", username: "yashrohil07", name: "Yash Rohil", role: "Admin" },
@@ -269,41 +367,20 @@ class Database {
             ];
             localStorage.setItem("gju_users_v2", JSON.stringify(defaultUsers));
         }
-    }
-
-    static getResources() {
-        this.init();
-        return JSON.parse(localStorage.getItem("gju_resource_hub_bsc_v2"));
-    }
-
-    static saveResources(resources) {
-        localStorage.setItem("gju_resource_hub_bsc_v2", JSON.stringify(resources));
-    }
-
-    static saveResource(resource) {
-        const db = this.getResources();
-        db.push(resource);
-        this.saveResources(db);
-    }
-
-    static getCurriculum() {
-        this.init();
-        return JSON.parse(localStorage.getItem("gju_curriculum_v2"));
-    }
-
-    static saveCurriculum(curriculum) {
-        localStorage.setItem("gju_curriculum_v2", JSON.stringify(curriculum));
-        // Update global mutable curriculum variable immediately
-        CURRICULUM = curriculum;
-    }
-
-    static getUsers() {
-        this.init();
         return JSON.parse(localStorage.getItem("gju_users_v2"));
     }
 
-    static saveUsers(users) {
+    static async saveUsers(users) {
         localStorage.setItem("gju_users_v2", JSON.stringify(users));
+        if (window.isFirebaseInitialized) {
+            try {
+                for (let user of users) {
+                    await db.collection("users").doc(user.username).set(user);
+                }
+            } catch (err) {
+                console.error("Failed to sync user directory to Firestore:", err);
+            }
+        }
     }
 }
 
@@ -762,6 +839,12 @@ function openViewer(resourceId) {
                     // Average the ratings
                     targetRes.rating = parseFloat((targetRes.reviews.reduce((acc, r) => acc + r.rating, 0) / targetRes.reviews.length).toFixed(1));
                     
+                    if (window.isFirebaseInitialized) {
+                        db.collection("resources").doc(resource.id).update({
+                            reviews: targetRes.reviews,
+                            rating: targetRes.rating
+                        }).catch(e => console.error("Error writing review:", e));
+                    }
                     localStorage.setItem("gju_resource_hub_bsc_v2", JSON.stringify(db2));
                     
                     // Update local references
@@ -1893,7 +1976,7 @@ function initUploadPage() {
             ]
         };
 
-        // Activate simulated progression UI
+        // Activate progress UI
         const progressBox = document.getElementById("progressBox");
         const progressBar = document.getElementById("progressBar");
         const progressPercentage = document.getElementById("progressPercentage");
@@ -1902,67 +1985,132 @@ function initUploadPage() {
         progressBox.style.display = "block";
         uploadForm.querySelector("button[type='submit']").disabled = true;
 
-        let progress = 0;
-        const statusTexts = [
-            "Initializing secure upload pipe...",
-            "Encrypting document blocks...",
-            "Validating syllabus mapping details...",
-            "Writing records to GJU Resource Hub DB...",
-            "Upload finalized successfully!"
-        ];
+        if (window.isFirebaseInitialized) {
+            // REAL FIREBASE STORAGE UPLOAD WORKFLOW
+            try {
+                const storageRef = storage.ref('resources/' + Date.now() + '_' + file.name);
+                const uploadTask = storageRef.put(file);
 
-        const interval = setInterval(() => {
-            progress += 2;
-            progressBar.style.width = `${progress}%`;
-            progressPercentage.textContent = `${progress}%`;
+                uploadTask.on('state_changed', 
+                    (snapshot) => {
+                        const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+                        progressBar.style.width = `${progress}%`;
+                        progressPercentage.textContent = `${progress}%`;
+                        
+                        if (progress < 25) progressStatus.textContent = "Initializing secure upload pipe...";
+                        else if (progress < 50) progressStatus.textContent = "Encrypting document blocks...";
+                        else if (progress < 90) progressStatus.textContent = "Streaming document bytes to Firebase...";
+                        else progressStatus.textContent = "Finalizing upload stream...";
+                    }, 
+                    (error) => {
+                        console.error("Firebase Storage Upload Error:", error);
+                        showToast("Upload failed: " + error.message);
+                        progressBox.style.display = "none";
+                        uploadForm.querySelector("button[type='submit']").disabled = false;
+                    }, 
+                    async () => {
+                        try {
+                            const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+                            
+                            const newResource = {
+                                id: `uploaded-${Date.now()}`,
+                                title: title,
+                                type: type,
+                                semester: semester,
+                                subject: subject,
+                                author: author,
+                                size: formattedSize,
+                                date: new Date().toLocaleDateString("en-US", { month: "short", year: "numeric" }),
+                                rating: 5.0,
+                                downloadCount: 0,
+                                filePath: downloadURL, // Public Firebase Cloud Storage download URL!
+                                preview: customPreview,
+                                approved: false // Unapproved by default for moderation review
+                            };
 
-            // Transition text states based on percent completed
-            if (progress < 25) progressStatus.textContent = statusTexts[0];
-            else if (progress < 50) progressStatus.textContent = statusTexts[1];
-            else if (progress < 75) progressStatus.textContent = statusTexts[2];
-            else if (progress < 95) progressStatus.textContent = statusTexts[3];
-            else progressStatus.textContent = statusTexts[4];
-
-            if (progress >= 100) {
-                clearInterval(interval);
-                
-                // Write customized record into Database
-                const newResource = {
-                    id: `uploaded-${Date.now()}`,
-                    title: title,
-                    type: type,
-                    semester: semester,
-                    subject: subject,
-                    author: author,
-                    size: formattedSize,
-                    date: new Date().toLocaleDateString("en-US", { month: "short", year: "numeric" }),
-                    rating: 5.0,
-                    downloadCount: 0,
-                    filePath: "#", 
-                    fileData: uploadedFileBase64, // The actual Base64 Data URL stored in LocalStorage!
-                    preview: customPreview,
-                    approved: false // Explicitly set to false by default for moderation!
-                };
-
-                Database.saveResource(newResource);
-                
-                showToast("Resource Uploaded & Published Successfully!");
-
-                uploadedFileBase64 = null;
-
-                // Reset form fields
-                setTimeout(() => {
-                    uploadForm.reset();
-                    fileInput.value = "";
-                    selectedFileIndicator.style.display = "none";
-                    progressBox.style.display = "none";
-                    uploadForm.querySelector("button[type='submit']").disabled = false;
-                    
-                    // Route users back to browser library page
-                    window.location.href = type === "notes" ? "notes.html" : "papers.html";
-                }, 1000);
+                            await Database.saveResource(newResource);
+                            showToast("Resource Uploaded & Sent for Moderation!");
+                            
+                            // Clear inputs and redirect
+                            setTimeout(() => {
+                                uploadForm.reset();
+                                fileInput.value = "";
+                                selectedFileIndicator.style.display = "none";
+                                progressBox.style.display = "none";
+                                uploadForm.querySelector("button[type='submit']").disabled = false;
+                                window.location.href = type === "notes" ? "notes.html" : "papers.html";
+                            }, 1000);
+                        } catch (err) {
+                            console.error("Firestore Resource Save Error:", err);
+                            showToast("Failed to index resource in database.");
+                            progressBox.style.display = "none";
+                            uploadForm.querySelector("button[type='submit']").disabled = false;
+                        }
+                    }
+                );
+            } catch (err) {
+                console.error("Storage Initialization Error:", err);
+                showToast("Failed to connect to Storage.");
+                progressBox.style.display = "none";
+                uploadForm.querySelector("button[type='submit']").disabled = false;
             }
-        }, 30);
+        } else {
+            // OFFLINE BACKUP LOCALSTORAGE SANDBOX SIMULATION
+            let progress = 0;
+            const statusTexts = [
+                "Initializing local upload sandbox...",
+                "Encoding document to Base64 byte array...",
+                "Validating curriculum mapping details...",
+                "Writing records to LocalStorage...",
+                "Upload finalized locally!"
+            ];
+
+            const interval = setInterval(() => {
+                progress += 2;
+                progressBar.style.width = `${progress}%`;
+                progressPercentage.textContent = `${progress}%`;
+
+                if (progress < 25) progressStatus.textContent = statusTexts[0];
+                else if (progress < 50) progressStatus.textContent = statusTexts[1];
+                else if (progress < 75) progressStatus.textContent = statusTexts[2];
+                else if (progress < 95) progressStatus.textContent = statusTexts[3];
+                else progressStatus.textContent = statusTexts[4];
+
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    
+                    const newResource = {
+                        id: `uploaded-${Date.now()}`,
+                        title: title,
+                        type: type,
+                        semester: semester,
+                        subject: subject,
+                        author: author,
+                        size: formattedSize,
+                        date: new Date().toLocaleDateString("en-US", { month: "short", year: "numeric" }),
+                        rating: 5.0,
+                        downloadCount: 0,
+                        filePath: "#", 
+                        fileData: uploadedFileBase64, // LocalStorage Base64 stream fallback
+                        preview: customPreview,
+                        approved: false
+                    };
+
+                    Database.saveResource(newResource);
+                    showToast("Offline sandbox upload saved successfully!");
+                    uploadedFileBase64 = null;
+
+                    setTimeout(() => {
+                        uploadForm.reset();
+                        fileInput.value = "";
+                        selectedFileIndicator.style.display = "none";
+                        progressBox.style.display = "none";
+                        uploadForm.querySelector("button[type='submit']").disabled = false;
+                        window.location.href = type === "notes" ? "notes.html" : "papers.html";
+                    }, 1000);
+                }
+            }, 30);
+        }
     });
 }
 
