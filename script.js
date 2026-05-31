@@ -258,50 +258,78 @@ let ALL_RESOURCES = [];
 
 class Database {
     static async init() {
-        if (window.isFirebaseInitialized) {
-            try {
-                // 1. Fetch Curriculum from Firestore
-                const curDoc = await db.collection("curriculum").doc("default").get();
-                if (curDoc.exists) {
-                    CURRICULUM = curDoc.data().semesters;
-                } else {
-                    // Seed defaults if empty
-                    await db.collection("curriculum").doc("default").set({ semesters: CURRICULUM_DEFAULT });
-                    CURRICULUM = CURRICULUM_DEFAULT;
-                }
-
-                // 2. Fetch Resources from Firestore
-                const resSnap = await db.collection("resources").get();
-                ALL_RESOURCES = [];
-                resSnap.forEach(doc => {
-                    ALL_RESOURCES.push({ id: doc.id, ...doc.data() });
-                });
-
-                // Seeding if Firestore is empty
-                if (ALL_RESOURCES.length === 0) {
-                    console.log("Firestore resources collection is empty. Seeding preloaded library...");
-                    for (let res of INITIAL_RESOURCES) {
-                        res.approved = true; // Auto approved for preloads
-                        // Generate a clean doc id or let Firestore assign one
-                        await db.collection("resources").add(res);
+        if (this.initialized) return;
+        if (this.initializing) return this.initializingPromise;
+        
+        this.initializing = true;
+        this.initializingPromise = (async () => {
+            if (window.isFirebaseInitialized && window.db) {
+                try {
+                    // 1. Fetch Curriculum from Firestore
+                    const curDoc = await db.collection("curriculum").doc("default").get();
+                    if (curDoc.exists) {
+                        CURRICULUM = curDoc.data().semesters;
+                    } else {
+                        // Seed defaults if empty
+                        await db.collection("curriculum").doc("default").set({ semesters: CURRICULUM_DEFAULT });
+                        CURRICULUM = CURRICULUM_DEFAULT;
                     }
-                    // Re-fetch seeded data
-                    const seedSnap = await db.collection("resources").get();
-                    seedSnap.forEach(doc => {
+
+                    // 2. Fetch Resources from Firestore
+                    const resSnap = await db.collection("resources").get();
+                    ALL_RESOURCES = [];
+                    resSnap.forEach(doc => {
                         ALL_RESOURCES.push({ id: doc.id, ...doc.data() });
                     });
+
+                    // Seeding if Firestore is empty
+                    if (ALL_RESOURCES.length === 0) {
+                        console.log("Firestore resources collection is empty. Seeding preloaded library...");
+                        for (let res of INITIAL_RESOURCES) {
+                            res.approved = true; // Auto approved for preloads
+                            await db.collection("resources").doc(res.id).set(res);
+                        }
+                        // Re-fetch seeded data
+                        const seedSnap = await db.collection("resources").get();
+                        seedSnap.forEach(doc => {
+                            ALL_RESOURCES.push({ id: doc.id, ...doc.data() });
+                        });
+                    }
+                    
+                    // 3. Fetch Users from Firestore
+                    const usersSnap = await db.collection("users").get();
+                    let usersList = [];
+                    usersSnap.forEach(doc => {
+                        usersList.push({ id: doc.id, ...doc.data() });
+                    });
+                    
+                    if (usersList.length === 0) {
+                        const defaultUsers = [
+                            { id: "user-1", username: "yashrohil07", name: "Yash Rohil", role: "Admin" },
+                            { id: "user-2", username: "amit_gju", name: "Amit Sharma", role: "Student" },
+                            { id: "user-3", username: "sneha_2026", name: "Sneha Goel", role: "Student" }
+                        ];
+                        for (let u of defaultUsers) {
+                            await db.collection("users").doc(u.username).set(u);
+                        }
+                        usersList = defaultUsers;
+                    }
+                    localStorage.setItem("gju_users_v2", JSON.stringify(usersList));
+                    
+                    // Cache locally for offline backup reference
+                    localStorage.setItem("gju_curriculum_v2", JSON.stringify(CURRICULUM));
+                    localStorage.setItem("gju_resource_hub_bsc_v2", JSON.stringify(ALL_RESOURCES));
+                } catch (err) {
+                    console.error("Firebase Firestore fetch error, falling back to LocalStorage:", err);
+                    this.fallbackToLocalStorage();
                 }
-                
-                // Cache locally for offline backup reference
-                localStorage.setItem("gju_curriculum_v2", JSON.stringify(CURRICULUM));
-                localStorage.setItem("gju_resource_hub_bsc_v2", JSON.stringify(ALL_RESOURCES));
-            } catch (err) {
-                console.error("Firebase Firestore fetch error, falling back to LocalStorage:", err);
+            } else {
                 this.fallbackToLocalStorage();
             }
-        } else {
-            this.fallbackToLocalStorage();
-        }
+            this.initialized = true;
+            this.initializing = false;
+        })();
+        return this.initializingPromise;
     }
 
     static fallbackToLocalStorage() {
@@ -319,26 +347,47 @@ class Database {
         return ALL_RESOURCES;
     }
 
-    static async saveResources(resources) {
+    static saveResources(resources) {
         ALL_RESOURCES = resources;
         localStorage.setItem("gju_resource_hub_bsc_v2", JSON.stringify(resources));
     }
 
-    static async saveResource(resource) {
-        ALL_RESOURCES.push(resource);
-        if (window.isFirebaseInitialized) {
-            try {
-                const docId = resource.id;
-                const data = { ...resource };
-                delete data.id; // Strip local ID as we use it as document ID
-                await db.collection("resources").doc(docId).set(data);
-            } catch (err) {
-                console.error("Failed to write resource to Firestore:", err);
+    static saveResource(resource) {
+        // Prevent duplicate local additions
+        if (!ALL_RESOURCES.some(r => r.id === resource.id)) {
+            ALL_RESOURCES.push(resource);
+        }
+        localStorage.setItem("gju_resource_hub_bsc_v2", JSON.stringify(ALL_RESOURCES));
+        
+        if (window.isFirebaseInitialized && window.db) {
+            const docId = resource.id;
+            const data = { ...resource };
+            delete data.id; // Strip local ID as we use it as document ID
+            db.collection("resources").doc(docId).set(data)
+                .catch(err => console.error("Failed to write resource to Firestore:", err));
+        }
+    }
+
+    static updateResource(resourceId, updatedFields) {
+        const idx = ALL_RESOURCES.findIndex(r => r.id === resourceId);
+        if (idx !== -1) {
+            ALL_RESOURCES[idx] = { ...ALL_RESOURCES[idx], ...updatedFields };
+            localStorage.setItem("gju_resource_hub_bsc_v2", JSON.stringify(ALL_RESOURCES));
+            
+            if (window.isFirebaseInitialized && window.db) {
+                db.collection("resources").doc(resourceId).update(updatedFields)
+                    .catch(err => console.error("Failed to update resource in Firestore:", err));
             }
-        } else {
-            const dbLocal = JSON.parse(localStorage.getItem("gju_resource_hub_bsc_v2")) || [];
-            dbLocal.push(resource);
-            localStorage.setItem("gju_resource_hub_bsc_v2", JSON.stringify(dbLocal));
+        }
+    }
+
+    static deleteResource(resourceId) {
+        ALL_RESOURCES = ALL_RESOURCES.filter(r => r.id !== resourceId);
+        localStorage.setItem("gju_resource_hub_bsc_v2", JSON.stringify(ALL_RESOURCES));
+        
+        if (window.isFirebaseInitialized && window.db) {
+            db.collection("resources").doc(resourceId).delete()
+                .catch(err => console.error("Failed to delete resource in Firestore:", err));
         }
     }
 
@@ -346,15 +395,12 @@ class Database {
         return CURRICULUM;
     }
 
-    static async saveCurriculum(curriculum) {
+    static saveCurriculum(curriculum) {
         CURRICULUM = curriculum;
         localStorage.setItem("gju_curriculum_v2", JSON.stringify(curriculum));
-        if (window.isFirebaseInitialized) {
-            try {
-                await db.collection("curriculum").doc("default").set({ semesters: curriculum });
-            } catch (err) {
-                console.error("Failed to sync curriculum map to Firestore:", err);
-            }
+        if (window.isFirebaseInitialized && window.db) {
+            db.collection("curriculum").doc("default").set({ semesters: curriculum })
+                .catch(err => console.error("Failed to sync curriculum map to Firestore:", err));
         }
     }
 
@@ -370,16 +416,38 @@ class Database {
         return JSON.parse(localStorage.getItem("gju_users_v2"));
     }
 
-    static async saveUsers(users) {
+    static saveUsers(users) {
         localStorage.setItem("gju_users_v2", JSON.stringify(users));
-        if (window.isFirebaseInitialized) {
-            try {
-                for (let user of users) {
-                    await db.collection("users").doc(user.username).set(user);
-                }
-            } catch (err) {
-                console.error("Failed to sync user directory to Firestore:", err);
+        if (window.isFirebaseInitialized && window.db) {
+            for (let user of users) {
+                db.collection("users").doc(user.username).set(user)
+                    .catch(err => console.error("Failed to sync user directory to Firestore:", err));
             }
+        }
+    }
+
+    static saveUser(user) {
+        const users = Database.getUsers();
+        const idx = users.findIndex(u => u.username === user.username);
+        if (idx !== -1) {
+            users[idx] = user;
+        } else {
+            users.push(user);
+        }
+        localStorage.setItem("gju_users_v2", JSON.stringify(users));
+        if (window.isFirebaseInitialized && window.db) {
+            db.collection("users").doc(user.username).set(user)
+                .catch(err => console.error("Failed to save user in Firestore:", err));
+        }
+    }
+
+    static deleteUser(username) {
+        const users = Database.getUsers();
+        const filtered = users.filter(u => u.username !== username);
+        localStorage.setItem("gju_users_v2", JSON.stringify(filtered));
+        if (window.isFirebaseInitialized && window.db) {
+            db.collection("users").doc(username).delete()
+                .catch(err => console.error("Failed to delete user in Firestore:", err));
         }
     }
 }
@@ -1107,7 +1175,13 @@ function openViewer(resourceId) {
                     // Average the ratings
                     targetRes.rating = parseFloat((targetRes.reviews.reduce((acc, r) => acc + r.rating, 0) / targetRes.reviews.length).toFixed(1));
                     
-                    localStorage.setItem("gju_resource_hub_bsc_v2", JSON.stringify(db2));
+                    if (window.isFirebaseInitialized && window.db) {
+                        db.collection("resources").doc(resource.id).update({
+                            reviews: targetRes.reviews,
+                            rating: targetRes.rating
+                        }).catch(e => console.error("Error writing review:", e));
+                    }
+                    Database.saveResources(db2);
                     
                     // Update local references
                     resource.reviews = targetRes.reviews;
@@ -1278,7 +1352,13 @@ function initEditModal() {
             db[idx].preview.sections[0].heading = "Document Overview & Definitions";
             db[idx].preview.sections[0].text = `This notes catalog is compiled covering specific curriculum objectives for ${subject} in Semester ${semester}.`;
 
-            localStorage.setItem("gju_resource_hub_bsc_v2", JSON.stringify(db));
+            Database.updateResource(id, {
+                title: title,
+                semester: semester,
+                subject: subject,
+                author: author,
+                preview: db[idx].preview
+            });
             
             showToast("Resource details updated successfully!");
             closeEdit();
@@ -1324,8 +1404,7 @@ function openEditModal(resourceId, pageType) {
 function deleteResource(resourceId, pageType) {
     if (confirm("Are you absolutely sure you want to delete this contributed resource? This action cannot be undone.")) {
         const db = Database.getResources();
-        const filteredDb = db.filter(r => r.id !== resourceId);
-        localStorage.setItem("gju_resource_hub_bsc_v2", JSON.stringify(filteredDb));
+        Database.deleteResource(resourceId);
         showToast("Resource deleted successfully!");
         renderResources(pageType);
     }
@@ -1336,8 +1415,8 @@ function incrementDownloads(resourceId) {
     const db = Database.getResources();
     const idx = db.findIndex(r => r.id === resourceId);
     if (idx !== -1) {
-        db[idx].downloadCount += 1;
-        localStorage.setItem("gju_resource_hub_bsc_v2", JSON.stringify(db));
+        const newCount = db[idx].downloadCount + 1;
+        Database.updateResource(resourceId, { downloadCount: newCount });
         
         // Update grid element stats if on the resource browser pages
         const card = document.querySelector(`[data-id="${resourceId}"]`);

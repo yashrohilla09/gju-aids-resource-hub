@@ -13,23 +13,25 @@ const firebaseConfig = {
     appId: "YOUR_APP_ID_HERE"
 };
 
-// Initialize Firebase SDK instances if configuration is provided
-let db = null;
-let auth = null;
-let storage = null;
-let isFirebaseInitialized = false;
+// Initialize Firebase SDK instances globally on window if configuration is provided
+window.db = null;
+window.auth = null;
+window.storage = null;
+window.isFirebaseInitialized = false;
 
-if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "YOUR_API_KEY_HERE") {
-    try {
+try {
+    if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "YOUR_API_KEY_HERE" && firebaseConfig.apiKey.trim() !== "") {
         firebase.initializeApp(firebaseConfig);
-        db = firebase.firestore();
-        auth = firebase.auth();
-        storage = firebase.storage();
-        isFirebaseInitialized = true;
+        window.db = firebase.firestore();
+        window.auth = firebase.auth();
+        window.storage = firebase.storage();
+        window.isFirebaseInitialized = true;
         console.log("Firebase Cloud Backend Initialized Successfully.");
-    } catch (error) {
-        console.error("Firebase Initialization Failed:", error);
+    } else {
+        console.warn("Firebase config has placeholders. App running in LOCAL SEED OFFLINE MODE until credentials are configured.");
     }
-} else {
-    console.warn("Firebase config has placeholders. App running in LOCAL SEED OFFLINE MODE until credentials are configured.");
+} catch (error) {
+    console.error("Firebase Initialization Failed (falling back to LOCAL SEED OFFLINE MODE):", error);
+    window.isFirebaseInitialized = false;
 }
+

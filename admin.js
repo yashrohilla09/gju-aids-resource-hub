@@ -2,12 +2,17 @@
    GJU AI&DS Resource Hub - Admin Panel Controller
    ========================================================================== */
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
     // Initialize admin session state
     const sessionData = localStorage.getItem("gju_admin_session");
     if (!sessionData) {
         window.location.replace("admin-login.html");
         return;
+    }
+    
+    // Ensure Database is initialized from Firestore before rendering
+    if (window.Database) {
+        await Database.init();
     }
     
     const session = JSON.parse(sessionData);
@@ -70,8 +75,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const btnLogoutAdmin = document.getElementById("btnLogoutAdmin");
     if (btnLogoutAdmin) {
-        btnLogoutAdmin.addEventListener("click", () => {
+        btnLogoutAdmin.addEventListener("click", async () => {
             if (confirm("Are you sure you want to end your administrative session?")) {
+                if (window.isFirebaseInitialized && window.auth) {
+                    try {
+                        await auth.signOut();
+                    } catch (e) {
+                        console.error("Firebase SignOut Error:", e);
+                    }
+                }
                 localStorage.removeItem("gju_admin_session");
                 showToast("Logged out successfully.");
                 setTimeout(() => {
@@ -188,15 +200,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Expose quickApprove function globally for easy click access
     window.quickApprove = function(resId) {
-        const db = Database.getResources();
-        const idx = db.findIndex(r => r.id === resId);
-        if (idx !== -1) {
-            db[idx].approved = true;
-            Database.saveResources(db);
-            showToast("Resource approved successfully!");
-            renderOverviewTab();
-            updatePendingBadgeCount();
-        }
+        Database.updateResource(resId, { approved: true });
+        showToast("Resource approved successfully!");
+        renderOverviewTab();
+        updatePendingBadgeCount();
     };
 
     // --------------------------------------------------------------------------
@@ -320,12 +327,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 let updatedResourcesCount = 0;
                 resources.forEach(res => {
                     if (res.semester === originalSem && res.subject === originalName) {
-                        res.subject = subName;
+                        Database.updateResource(res.id, { subject: subName });
                         updatedResourcesCount++;
                     }
                 });
                 if (updatedResourcesCount > 0) {
-                    Database.saveResources(resources);
                     console.log(`Cascaded subject name updates to ${updatedResourcesCount} resources.`);
                 }
 
@@ -479,9 +485,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     window.deleteResourceAdmin = function(resId) {
         if (confirm("Are you absolutely sure you want to delete this resource from the repository? This cannot be undone.")) {
-            const db = Database.getResources();
-            const filtered = db.filter(r => r.id !== resId);
-            Database.saveResources(filtered);
+            Database.deleteResource(resId);
             showToast("Resource deleted successfully!");
             renderResourcesTab();
             updatePendingBadgeCount();
@@ -536,22 +540,18 @@ document.addEventListener("DOMContentLoaded", () => {
                     preview: customPreview
                 };
 
-                db.push(newRes);
-                Database.saveResources(db);
+                Database.saveResource(newRes);
                 showToast("Resource added to library!");
             } else {
                 const id = document.getElementById("resIdInput").value;
-                const idx = db.findIndex(r => r.id === id);
-                if (idx !== -1) {
-                    db[idx].title = title;
-                    db[idx].semester = semester;
-                    db[idx].subject = subject;
-                    db[idx].type = type;
-                    db[idx].author = author;
-                    
-                    Database.saveResources(db);
-                    showToast("Resource updated successfully!");
-                }
+                Database.updateResource(id, {
+                    title: title,
+                    semester: semester,
+                    subject: subject,
+                    type: type,
+                    author: author
+                });
+                showToast("Resource updated successfully!");
             }
 
             closeAdminModal("resourceModal");
@@ -622,22 +622,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     window.approveUpload = function(resId) {
-        const db = Database.getResources();
-        const idx = db.findIndex(r => r.id === resId);
-        if (idx !== -1) {
-            db[idx].approved = true;
-            Database.saveResources(db);
-            showToast("Resource Published to student libraries!");
-            renderModerationTab();
-            updatePendingBadgeCount();
-        }
+        Database.updateResource(resId, { approved: true });
+        showToast("Resource Published to student libraries!");
+        renderModerationTab();
+        updatePendingBadgeCount();
     };
 
     window.rejectUpload = function(resId) {
         if (confirm("Are you sure you want to reject and permanently delete this uploaded file?")) {
-            const db = Database.getResources();
-            const filtered = db.filter(r => r.id !== resId);
-            Database.saveResources(filtered);
+            Database.deleteResource(resId);
             showToast("Contribution rejected & deleted.");
             renderModerationTab();
             updatePendingBadgeCount();
@@ -740,10 +733,12 @@ document.addEventListener("DOMContentLoaded", () => {
     window.deleteUserAdmin = function(userId) {
         if (confirm("Are you sure you want to permanently delete this user account profile?")) {
             const users = Database.getUsers();
-            const filtered = users.filter(u => u.id !== userId);
-            Database.saveUsers(filtered);
-            showToast("User profile deleted.");
-            renderUsersTab();
+            const user = users.find(u => u.id === userId);
+            if (user) {
+                Database.deleteUser(user.username);
+                showToast("User profile deleted.");
+                renderUsersTab();
+            }
         }
     };
 
@@ -774,8 +769,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     name: realName,
                     role: role
                 };
-                users.push(newUser);
-                Database.saveUsers(users);
+                Database.saveUser(newUser);
                 showToast("User Profile Created!");
             } else {
                 const id = document.getElementById("userIdInput").value;
@@ -787,11 +781,18 @@ document.addEventListener("DOMContentLoaded", () => {
                         return;
                     }
 
-                    users[idx].name = realName;
-                    users[idx].username = username;
-                    users[idx].role = role;
-                    
-                    Database.saveUsers(users);
+                    const oldUsername = users[idx].username;
+                    if (oldUsername !== username) {
+                        Database.deleteUser(oldUsername);
+                    }
+
+                    const updatedUser = {
+                        id: id,
+                        username: username,
+                        name: realName,
+                        role: role
+                    };
+                    Database.saveUser(updatedUser);
                     showToast("User profile updated successfully.");
                 }
             }

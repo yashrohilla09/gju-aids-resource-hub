@@ -314,6 +314,14 @@
                 await Database.init();
             }
 
+            // Seed default admin credentials in localStorage if not present
+            if (!localStorage.getItem("gju_admin_credentials")) {
+                localStorage.setItem("gju_admin_credentials", JSON.stringify({
+                    username: "yashrohil07",
+                    password: "Yash@123"
+                }));
+            }
+
             // Load remembered credential if exists
             const rememberedUserId = localStorage.getItem("gju_remembered_admin");
             if (rememberedUserId) {
@@ -333,8 +341,40 @@
                 const pass = document.getElementById("adminPassword").value;
                 const remember = document.getElementById("rememberMe").checked;
 
-                if (window.isFirebaseInitialized) {
-                    // Translate User ID to standard Email address
+                // Load credentials from localStorage
+                const adminCreds = JSON.parse(localStorage.getItem("gju_admin_credentials")) || {
+                    username: "yashrohil07",
+                    password: "Yash@123"
+                };
+
+                const cleanUserId = userId.toLowerCase().replace("@gju.edu", "").trim();
+
+                // 1. Primary Local Admin Bypass: Validate credentials against localStorage
+                if (cleanUserId === adminCreds.username && pass === adminCreds.password) {
+                    if (remember) {
+                        localStorage.setItem("gju_remembered_admin", userId);
+                    } else {
+                        localStorage.removeItem("gju_remembered_admin");
+                    }
+
+                    // Create Session
+                    const session = {
+                        username: cleanUserId,
+                        name: "Yash Rohil",
+                        role: "Admin",
+                        timestamp: Date.now()
+                    };
+                    localStorage.setItem("gju_admin_session", JSON.stringify(session));
+
+                    showToast("Login Successful! Accessing Admin Console...");
+                    setTimeout(() => {
+                        window.location.href = "admin-dashboard.html";
+                    }, 1000);
+                    return;
+                }
+
+                // 2. Firebase Cloud Auth fallback attempt (if initialized)
+                if (window.isFirebaseInitialized && window.auth) {
                     const email = userId.includes("@") ? userId : `${userId}@gju.edu`;
                     
                     auth.signInWithEmailAndPassword(email, pass)
@@ -345,7 +385,6 @@
                                 localStorage.removeItem("gju_remembered_admin");
                             }
                             
-                            // Save standard backup session token for safety
                             const session = {
                                 username: userId,
                                 name: "Yash Rohil",
@@ -354,14 +393,14 @@
                             };
                             localStorage.setItem("gju_admin_session", JSON.stringify(session));
                             
-                            showToast("Login Successful! Accessing Admin Console...");
+                            showToast("Login Successful! Syncing cloud backend...");
                             setTimeout(() => {
                                 window.location.href = "admin-dashboard.html";
                             }, 1000);
                         })
                         .catch((error) => {
                             console.error("Firebase Auth Error:", error);
-                            errorText.textContent = "Firebase Authentication Failed: " + error.message;
+                            errorText.textContent = "Authentication Failed: " + error.message;
                             errorMsg.style.display = "flex";
                             
                             const card = document.querySelector(".login-card");
@@ -369,33 +408,13 @@
                             setTimeout(() => card.style.animation = "", 400);
                         });
                 } else {
-                    // OFFLINE MOCK FALLBACK MODE
-                    if (userId === "yashrohil07" && pass === "Yash@123") {
-                        if (remember) {
-                            localStorage.setItem("gju_remembered_admin", userId);
-                        } else {
-                            localStorage.removeItem("gju_remembered_admin");
-                        }
-
-                        const session = {
-                            username: "yashrohil07",
-                            name: "Yash Rohil",
-                            role: "Admin",
-                            timestamp: Date.now()
-                        };
-                        localStorage.setItem("gju_admin_session", JSON.stringify(session));
-
-                        showToast("Local Offline Sandbox Activated! Accessing Dashboard...");
-                        setTimeout(() => {
-                            window.location.href = "admin-dashboard.html";
-                        }, 1000);
-                    } else {
-                        errorText.textContent = "Offline Fallback: Invalid User ID or Password.";
-                        errorMsg.style.display = "flex";
-                        const card = document.querySelector(".login-card");
-                        card.style.animation = "shake 0.4s ease";
-                        setTimeout(() => card.style.animation = "", 400);
-                    }
+                    // Fail credentials locally
+                    errorText.textContent = "Invalid User ID or Password. Authentication Rejected.";
+                    errorMsg.style.display = "flex";
+                    
+                    const card = document.querySelector(".login-card");
+                    card.style.animation = "shake 0.4s ease";
+                    setTimeout(() => card.style.animation = "", 400);
                 }
             });
         });
