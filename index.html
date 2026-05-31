@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GJU AI&DS Resource Hub | Guru Jambheshwar University</title>
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Access lecture notes, past exam papers, and practical files for GJU Guru Jambheshwar University's Artificial Intelligence & Data Science (AI & DS) branch. Select Semesters 1-8.">
+    <!-- FontAwesome CDNs -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Master Stylesheet Link -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- Responsive Navigation Header -->
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="logo" id="logoLink">
+                <i class="fas fa-brain"></i> GJU AI&DS
+            </a>
+            <button class="hamburger" id="hamburgerBtn" aria-label="Toggle Menu">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="index.html" class="nav-link active" id="homeLink"><i class="fas fa-home"></i> Home</a></li>
+                <li><a href="notes.html" class="nav-link" id="notesLink"><i class="fas fa-book-open"></i> Notes</a></li>
+                <li><a href="papers.html" class="nav-link" id="papersLink"><i class="fas fa-file-invoice"></i> Papers</a></li>
+                <li><a href="dashboard.html" class="nav-link" id="dashLink"><i class="fas fa-chart-bar"></i> Analytics</a></li>
+                <li>
+                    <button class="btn-circle" id="themeToggleBtn" title="Toggle Theme" style="margin-left: 0.5rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); color: var(--text-muted); cursor: pointer; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all var(--transition-speed) ease;">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </li>
+                <li>
+                    <a href="upload.html" class="btn-upload-nav" id="uploadLink">
+                        <i class="fas fa-cloud-upload-alt"></i> Upload
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </header>
+
+    <!-- Main Landing Hero Section -->
+    <section class="hero" id="heroSection">
+        <div class="hero-glow"></div>
+        <div class="badge-gju" id="badgeGju">
+            <i class="fas fa-graduation-cap"></i> GJU AI&DS Branch Portal
+        </div>
+        <h1 id="heroTitle">Artificial Intelligence &<br><span style="background: var(--grad-teal); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Data Science</span> Hub</h1>
+        <p id="heroDescription">Maximize your academic score with syllabus-matched lecture notes, lab manuals, and previous year examination papers tailored specifically for Guru Jambheshwar University students.</p>
+        
+        <!-- Hero Interactive Search Bar -->
+        <div class="search-box-wrapper" style="max-width: 600px; margin: 0 auto 3rem; box-shadow: 0 10px 30px rgba(0,0,0,0.4); border-radius: 12px;">
+            <i class="fas fa-search" style="left: 1.5rem; color: var(--primary);"></i>
+            <input type="text" class="search-input" id="heroSearchInput" placeholder="Search calculus notes, python labs, algorithms PYQs..." style="padding: 1.2rem 1.5rem 1.2rem 3.5rem; background: rgba(13, 18, 33, 0.9); border: 1px solid rgba(99, 102, 241, 0.35); border-radius:12px; font-size:1.05rem;">
+        </div>
+
+        <div class="hero-buttons">
+            <a href="notes.html" class="btn-primary" id="btnBrowseNotes">
+                <i class="fas fa-book-open"></i> Browse Notes
+            </a>
+            <a href="papers.html" class="btn-secondary" id="btnBrowsePapers">
+                <i class="fas fa-file-alt"></i> Past Papers
+            </a>
+        </div>
+    </section>
+
+    <!-- Interactive Statistics Counters -->
+    <section class="stats-section" id="statsSection">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-number" id="totalResourcesVal">0+</span>
+                <span class="stat-label">Total Resources</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="totalPapersVal">0+</span>
+                <span class="stat-label">Previous Papers</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="totalNotesVal">0+</span>
+                <span class="stat-label">Lecture Notes</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="activeStudentsVal">0+</span>
+                <span class="stat-label">Active Users</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dynamic Recent Uploads Section -->
+    <section class="semesters-section" id="recentUploadsSection" style="padding-top:1rem; padding-bottom: 2rem;">
+        <div class="section-header" style="margin-bottom: 2.5rem;">
+            <h2><i class="fas fa-history" style="color:var(--secondary); margin-right:0.5rem;"></i> Recent Uploads</h2>
+            <p>Access the newest study resources uploaded dynamically by GJU students and faculty members.</p>
+        </div>
+        <div class="files-grid" id="recentUploadsGrid">
+            <!-- Programmatically rendered by script.js -->
+        </div>
+    </section>
+
+    <!-- Top Rated Resources Section -->
+    <section class="semesters-section" id="topRatedSection" style="padding-top:1rem; padding-bottom: 2rem;">
+        <div class="section-header" style="margin-bottom: 2.5rem;">
+            <h2><i class="fas fa-award" style="color:#fbbf24; margin-right:0.5rem;"></i> Top Rated Resources</h2>
+            <p>Highest-rated learning documents and exam papers compiled and reviewed by the student cell.</p>
+        </div>
+        <div class="files-grid" id="topRatedGrid">
+            <!-- Programmatically rendered by script.js -->
+        </div>
+    </section>
+
+    <!-- Top Subjects Section -->
+    <section class="semesters-section" id="topSubjectsSection" style="padding-top:1rem; padding-bottom: 2rem;">
+        <div class="section-header" style="margin-bottom: 3rem;">
+            <h2><i class="fas fa-star" style="color:#f59e0b; margin-right:0.5rem;"></i> Top Subjects</h2>
+            <p>Jump straight into notes and exam papers for the most popular subjects in the AI & DS branch.</p>
+        </div>
+        <div class="top-subjects-grid" style="display:grid; grid-template-columns: repeat(5, 1fr); gap: 1.2rem;">
+            
+            <!-- DSA Card -->
+            <div class="sem-card" style="padding: 1.8rem; text-align: center; height: auto;" onclick="window.location.href='notes.html?semester=3&subject=Data%20Structures'">
+                <div class="sem-icon" style="margin: 0 auto 1.2rem; background:rgba(99,102,241,0.1); color:var(--primary);"><i class="fas fa-sitemap"></i></div>
+                <h4 style="font-size:1.05rem; margin-bottom:0.4rem;">Data Structures</h4>
+                <span class="tag-badge" style="font-size:0.65rem; margin-bottom:0.8rem; display:inline-block;">Semester 3</span>
+                <span style="font-size:0.8rem; color:var(--text-muted); display:block;"><i class="fas fa-file-alt"></i> 4 active files</span>
+            </div>
+
+            <!-- Python Card -->
+            <div class="sem-card" style="padding: 1.8rem; text-align: center; height: auto;" onclick="window.location.href='notes.html?semester=2&subject=Python%20Programming'">
+                <div class="sem-icon" style="margin: 0 auto 1.2rem; background:rgba(13,242,201,0.1); color:var(--secondary);"><i class="fab fa-python"></i></div>
+                <h4 style="font-size:1.05rem; margin-bottom:0.4rem;">Python Prog.</h4>
+                <span class="tag-badge" style="font-size:0.65rem; margin-bottom:0.8rem; display:inline-block; background:rgba(13,242,201,0.1); color:var(--secondary); border-color:rgba(13,242,201,0.2);">Semester 2</span>
+                <span style="font-size:0.8rem; color:var(--text-muted); display:block;"><i class="fas fa-file-alt"></i> 4 active files</span>
+            </div>
+
+            <!-- DBMS Card -->
+            <div class="sem-card" style="padding: 1.8rem; text-align: center; height: auto;" onclick="window.location.href='notes.html?semester=3&subject=Database%20Management%20System'">
+                <div class="sem-icon" style="margin: 0 auto 1.2rem; background:rgba(168,85,247,0.1); color:var(--accent-purple);"><i class="fas fa-database"></i></div>
+                <h4 style="font-size:1.05rem; margin-bottom:0.4rem;">DBMS</h4>
+                <span class="tag-badge" style="font-size:0.65rem; margin-bottom:0.8rem; display:inline-block;">Semester 3</span>
+                <span style="font-size:0.8rem; color:var(--text-muted); display:block;"><i class="fas fa-file-alt"></i> 4 active files</span>
+            </div>
+
+            <!-- ML Card -->
+            <div class="sem-card" style="padding: 1.8rem; text-align: center; height: auto;" onclick="window.location.href='notes.html?semester=5&subject=Machine%20Learning'">
+                <div class="sem-icon" style="margin: 0 auto 1.2rem; background:rgba(99,102,241,0.1); color:var(--primary);"><i class="fas fa-robot"></i></div>
+                <h4 style="font-size:1.05rem; margin-bottom:0.4rem;">Machine Learning</h4>
+                <span class="tag-badge" style="font-size:0.65rem; margin-bottom:0.8rem; display:inline-block;">Semester 5</span>
+                <span style="font-size:0.8rem; color:var(--text-muted); display:block;"><i class="fas fa-file-alt"></i> 4 active files</span>
+            </div>
+
+            <!-- Deep Learning Card -->
+            <div class="sem-card" style="padding: 1.8rem; text-align: center; height: auto;" onclick="window.location.href='notes.html?semester=6&subject=Deep%20Learning'">
+                <div class="sem-icon" style="margin: 0 auto 1.2rem; background:rgba(13,242,201,0.1); color:var(--secondary);"><i class="fas fa-brain"></i></div>
+                <h4 style="font-size:1.05rem; margin-bottom:0.4rem;">Deep Learning</h4>
+                <span class="tag-badge" style="font-size:0.65rem; margin-bottom:0.8rem; display:inline-block; background:rgba(13,242,201,0.1); color:var(--secondary); border-color:rgba(13,242,201,0.2);">Semester 6</span>
+                <span style="font-size:0.8rem; color:var(--text-muted); display:block;"><i class="fas fa-file-alt"></i> 4 active files</span>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- 8 Semesters Curricular Sections Grid -->
+    <section class="semesters-section" id="semestersSection" style="padding-top:1rem;">
+        <div class="section-header">
+            <h2>Select Academic Semester</h2>
+            <p>Directly filter notes and past question papers based on your current semester curriculum.</p>
+        </div>
+        <div class="semesters-grid" id="semestersGrid">
+            
+            <!-- Sem 1 Card -->
+            <div class="sem-card" data-semester="1" id="semCard1">
+                <div class="sem-icon"><i class="fas fa-atom"></i></div>
+                <h3>Semester 1</h3>
+                <p>Foundations of C programming, Mathematics-I, Statistics for DS, Digital Electronics, and Communication.</p>
+                <span class="sem-link">Explore Subjects <i class="fas fa-arrow-right"></i></span>
+            </div>
+
+            <!-- Sem 2 Card -->
+            <div class="sem-card" data-semester="2" id="semCard2">
+                <div class="sem-icon"><i class="fab fa-python"></i></div>
+                <h3>Semester 2</h3>
+                <p>Advanced basics. Python Programming, Mathematics-II, Probability, Computer Organization, and Environment.</p>
+                <span class="sem-link">Explore Subjects <i class="fas fa-arrow-right"></i></span>
+            </div>
+
+            <!-- Sem 3 Card -->
+            <div class="sem-card" data-semester="3" id="semCard3">
+                <div class="sem-icon"><i class="fas fa-project-diagram"></i></div>
+                <h3>Semester 3</h3>
+                <p>Data Core. Data Structures, Database Management System, OOP in Java, Linear Algebra, and Operating Systems.</p>
+                <span class="sem-link">Explore Subjects <i class="fas fa-arrow-right"></i></span>
+            </div>
+
+            <!-- Sem 4 Card -->
+            <div class="sem-card" data-semester="4" id="semCard4">
+                <div class="sem-icon"><i class="fas fa-network-wired"></i></div>
+                <h3>Semester 4</h3>
+                <p>Systems Logic. Design & Analysis of Algorithms, Computer Networks, Data Mining, R Programming, and Software Eng.</p>
+                <span class="sem-link">Explore Subjects <i class="fas fa-arrow-right"></i></span>
+            </div>
+
+            <!-- Sem 5 Card -->
+            <div class="sem-card" data-semester="5" id="semCard5">
+                <div class="sem-icon"><i class="fas fa-robot"></i></div>
+                <h3>Semester 5</h3>
+                <p>Machine Intelligence. Artificial Intelligence, Machine Learning, Big Data Analytics, IoT, and Data Visualization.</p>
+                <span class="sem-link">Explore Subjects <i class="fas fa-arrow-right"></i></span>
+            </div>
+
+            <!-- Sem 6 Card -->
+            <div class="sem-card" data-semester="6" id="semCard6">
+                <div class="sem-icon"><i class="fas fa-chart-line"></i></div>
+                <h3>Semester 6</h3>
+                <p>Advanced Analytics. Deep Learning, Natural Language Processing, Cloud Computing, Info Security, and Projects.</p>
+                <span class="sem-link">Explore Subjects <i class="fas fa-arrow-right"></i></span>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Call to Action Upload Section -->
+    <section class="cta-banner" id="ctaSection">
+        <div class="cta-container">
+            <div class="cta-content">
+                <h2>Have useful study material?</h2>
+                <p>Help your peers score higher! Contribute your handwritten lecture notes, exam papers, or syllabus guides to our secure resource hub.</p>
+            </div>
+            <a href="upload.html" class="btn-primary" style="box-shadow: 0 4px 15px rgba(13, 242, 201, 0.3); background: var(--grad-teal); border: 1px solid rgba(13, 242, 201, 0.4); color: #070a13;" id="btnContributeNow">
+                <i class="fas fa-upload"></i> Share Resource
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer Area -->
+    <footer id="footerSection">
+        <div class="footer-container">
+            <div class="footer-info">
+                <h4><i class="fas fa-brain"></i> GJU AI&DS Hub</h4>
+                <p>An elite community repository designed to empower students of Guru Jambheshwar University, Hisar under the Artificial Intelligence & Data Science (AI & DS) Engineering branch.</p>
+                <div class="social-links">
+                    <a href="#" class="social-btn" aria-label="Github Link"><i class="fab fa-github"></i></a>
+                    <a href="#" class="social-btn" aria-label="LinkedIn Link"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#" class="social-btn" aria-label="Telegram Community"><i class="fab fa-telegram-plane"></i></a>
+                </div>
+                <a href="admin-login.html" class="admin-nav-link" style="color:var(--text-muted); font-size:0.8rem; margin-top:1.2rem; display:inline-flex; align-items:center; gap:0.4rem; border:1px solid rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:30px; background:rgba(255,255,255,0.02); transition:all var(--transition-speed) ease;"><i class="fas fa-user-shield" style="color:var(--primary);"></i> Admin Portal</a>
+            </div>
+            <div class="footer-links">
+                <h5>Lower Semesters</h5>
+                <ul>
+                    <li><a href="notes.html?semester=1">Semester 1</a></li>
+                    <li><a href="notes.html?semester=2">Semester 2</a></li>
+                    <li><a href="notes.html?semester=3">Semester 3</a></li>
+                </ul>
+            </div>
+            <div class="footer-links">
+                <h5>Higher Semesters</h5>
+                <ul>
+                    <li><a href="notes.html?semester=4">Semester 4</a></li>
+                    <li><a href="notes.html?semester=5">Semester 5</a></li>
+                    <li><a href="notes.html?semester=6">Semester 6</a></li>
+                </ul>
+            </div>
+            <div class="footer-links">
+                <h5>Branch Core</h5>
+                <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 0.5rem;">
+                    <strong>Department:</strong> Computer Science & Engineering Division
+                </p>
+                <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;">
+                    <strong>Affiliation:</strong> Guru Jambheshwar University of Science & Technology, Hisar, Haryana.
+                </p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 GJU AI&DS Resource Hub. Designed with visual excellence.</p>
+            <p>Made by students, for students.</p>
+        </div>
+    </footer>
+
+    <!-- Core Database & App Handler Scripts -->
+    <script src="js/script.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            initNavbar();
+            initIndexPage();
+        });
+    </script>
+</body>
+</html>

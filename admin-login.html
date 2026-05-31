@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Portal Login | GJU AI&DS Resource Hub</title>
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Secure administrative access to Guru Jambheshwar University AI & DS Resource Hub.">
+    <!-- FontAwesome CDNs -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Master Stylesheet Link -->
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .login-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 80vh;
+            padding: 2rem 1rem;
+        }
+        .login-card {
+            background: var(--bg-card);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            width: 100%;
+            max-width: 450px;
+            padding: 3rem 2.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: transform var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+        }
+        .login-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--grad-primary);
+        }
+        .login-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px 0 rgba(99, 102, 241, 0.15);
+            border-color: rgba(99, 102, 241, 0.2);
+        }
+        .login-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+        .login-header .icon-wrap {
+            width: 60px;
+            height: 60px;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            color: var(--primary);
+            font-size: 1.8rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+        }
+        .login-header h2 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+            background: var(--grad-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .login-header p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        .input-group {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        .input-group i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            transition: color var(--transition-speed) ease;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 0.8rem 1rem 0.8rem 2.8rem;
+            background: rgba(4, 6, 12, 0.5);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-highlight);
+            font-size: 0.95rem;
+            transition: all var(--transition-speed) ease;
+        }
+        .input-group input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.25);
+            background: rgba(4, 6, 12, 0.8);
+        }
+        .input-group input:focus + i {
+            color: var(--primary);
+        }
+        .remember-forgot {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            font-size: 0.85rem;
+        }
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+        .remember-me input {
+            accent-color: var(--primary);
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            padding: 0.8rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            margin-bottom: 1.5rem;
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-login {
+            width: 100%;
+            padding: 0.8rem;
+            background: var(--grad-primary);
+            border: none;
+            border-radius: 8px;
+            color: var(--text-highlight);
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3);
+            transition: all var(--transition-speed) ease;
+        }
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(168, 85, 247, 0.4);
+            filter: brightness(1.1);
+        }
+        .btn-login:active {
+            transform: translateY(0);
+        }
+        .back-link {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        .back-link a {
+            color: var(--secondary);
+            font-weight: 500;
+        }
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Responsive Navigation Header -->
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="logo" id="logoLink">
+                <i class="fas fa-brain"></i> GJU AI&DS
+            </a>
+            <button class="hamburger" id="hamburgerBtn" aria-label="Toggle Menu">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="index.html" class="nav-link" id="homeLink"><i class="fas fa-home"></i> Home</a></li>
+                <li><a href="notes.html" class="nav-link" id="notesLink"><i class="fas fa-book-open"></i> Notes</a></li>
+                <li><a href="papers.html" class="nav-link" id="papersLink"><i class="fas fa-file-invoice"></i> Papers</a></li>
+                <li><a href="dashboard.html" class="nav-link" id="dashLink"><i class="fas fa-chart-bar"></i> Analytics</a></li>
+                <li>
+                    <button class="btn-circle" id="themeToggleBtn" title="Toggle Theme" style="margin-left: 0.5rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); color: var(--text-muted); cursor: pointer; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all var(--transition-speed) ease;">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </li>
+                <li>
+                    <a href="upload.html" class="btn-upload-nav" id="uploadLink">
+                        <i class="fas fa-cloud-upload-alt"></i> Upload
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="login-wrapper">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="icon-wrap">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <h2>Admin Login</h2>
+                <p>Enter administrative credentials to access dashboard control systems</p>
+            </div>
+
+            <!-- Error Banner -->
+            <div class="error-message" id="errorMessage">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span id="errorText">Invalid User ID or Password.</span>
+            </div>
+
+            <form id="loginForm">
+                <div class="input-group">
+                    <input type="text" id="adminUserId" placeholder="Admin User ID" required>
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="input-group">
+                    <input type="password" id="adminPassword" placeholder="Password" required>
+                    <i class="fas fa-lock"></i>
+                </div>
+
+                <div class="remember-forgot">
+                    <label class="remember-me">
+                        <input type="checkbox" id="rememberMe">
+                        <span>Remember credentials</span>
+                    </label>
+                </div>
+
+                <button type="submit" class="btn-login" id="btnLoginSubmit">
+                    <span>Access Dashboard</span>
+                    <i class="fas fa-sign-in-alt"></i>
+                </button>
+            </form>
+
+            <div class="back-link">
+                <span>Not an administrator? </span>
+                <a href="index.html">Back to Home Hub</a>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Area -->
+    <footer id="footerSection">
+        <div class="footer-container">
+            <div class="footer-info">
+                <h4><i class="fas fa-brain"></i> GJU AI&DS Hub</h4>
+                <p>An elite community repository designed to empower students of Guru Jambheshwar University, Hisar under the Artificial Intelligence & Data Science (AI & DS) Engineering branch.</p>
+                <div class="social-links">
+                    <a href="#" class="social-btn" aria-label="Github Link"><i class="fab fa-github"></i></a>
+                    <a href="#" class="social-btn" aria-label="LinkedIn Link"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#" class="social-btn" aria-label="Telegram Community"><i class="fab fa-telegram-plane"></i></a>
+                </div>
+            </div>
+            <div class="footer-links">
+                <h5>Lower Semesters</h5>
+                <ul>
+                    <li><a href="notes.html?semester=1">Semester 1</a></li>
+                    <li><a href="notes.html?semester=2">Semester 2</a></li>
+                    <li><a href="notes.html?semester=3">Semester 3</a></li>
+                </ul>
+            </div>
+            <div class="footer-links">
+                <h5>Higher Semesters</h5>
+                <ul>
+                    <li><a href="notes.html?semester=4">Semester 4</a></li>
+                    <li><a href="notes.html?semester=5">Semester 5</a></li>
+                    <li><a href="notes.html?semester=6">Semester 6</a></li>
+                </ul>
+            </div>
+            <div class="footer-links">
+                <h5>Branch Core</h5>
+                <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 0.5rem;">
+                    <strong>Department:</strong> Computer Science & Engineering Division
+                </p>
+                <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;">
+                    <strong>Affiliation:</strong> Guru Jambheshwar University of Science & Technology, Hisar, Haryana.
+                </p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 GJU AI&DS Resource Hub. Designed with visual excellence.</p>
+            <p>Made by students, for students.</p>
+        </div>
+    </footer>
+
+    <!-- Core Database & App Handler Scripts -->
+    <script src="js/script.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            initNavbar();
+
+            // Load remembered credential if exists
+            const rememberedUserId = localStorage.getItem("gju_remembered_admin");
+            if (rememberedUserId) {
+                document.getElementById("adminUserId").value = rememberedUserId;
+                document.getElementById("rememberMe").checked = true;
+            }
+
+            const loginForm = document.getElementById("loginForm");
+            const errorMsg = document.getElementById("errorMessage");
+            const errorText = document.getElementById("errorText");
+
+            loginForm.addEventListener("submit", (e) => {
+                e.preventDefault();
+                errorMsg.style.display = "none";
+
+                const userId = document.getElementById("adminUserId").value.trim();
+                const pass = document.getElementById("adminPassword").value;
+                const remember = document.getElementById("rememberMe").checked;
+
+                // Validate admin credentials
+                if (userId === "yashrohil07" && pass === "Yash@123") {
+                    // Remember Me logic
+                    if (remember) {
+                        localStorage.setItem("gju_remembered_admin", userId);
+                    } else {
+                        localStorage.removeItem("gju_remembered_admin");
+                    }
+
+                    // Create Session
+                    const session = {
+                        username: "yashrohil07",
+                        name: "Yash Rohil",
+                        role: "Admin",
+                        timestamp: Date.now()
+                    };
+                    localStorage.setItem("gju_admin_session", JSON.stringify(session));
+
+                    // Show visual success notification
+                    showToast("Login Successful! Accessing Admin Console...");
+
+                    setTimeout(() => {
+                        window.location.href = "admin-dashboard.html";
+                    }, 1000);
+                } else {
+                    // Fail credentials
+                    errorText.textContent = "Invalid User ID or Password. Authentication Rejected.";
+                    errorMsg.style.display = "flex";
+                    
+                    // Add shake animation
+                    const card = document.querySelector(".login-card");
+                    card.style.animation = "shake 0.4s ease";
+                    setTimeout(() => card.style.animation = "", 400);
+                }
+            });
+        });
+    </script>
+    <style>
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+    </style>
+</body>
+</html>

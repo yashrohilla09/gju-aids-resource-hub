@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academic Analytics Dashboard | GJU AI&DS Resource Hub</title>
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Review GJU B.Sc AI & DS branch resource counts, semester allocations, subject coverage metrics, and most popular lecture files.">
+    <!-- FontAwesome CDNs -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Master Stylesheet Link -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- Responsive Navigation Header -->
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="logo" id="logoLink">
+                <i class="fas fa-brain"></i> GJU AI&DS
+            </a>
+            <button class="hamburger" id="hamburgerBtn" aria-label="Toggle Menu">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="index.html" class="nav-link" id="homeLink"><i class="fas fa-home"></i> Home</a></li>
+                <li><a href="notes.html" class="nav-link" id="notesLink"><i class="fas fa-book-open"></i> Notes</a></li>
+                <li><a href="papers.html" class="nav-link" id="papersLink"><i class="fas fa-file-invoice"></i> Papers</a></li>
+                <li><a href="dashboard.html" class="nav-link active" id="dashLink"><i class="fas fa-chart-bar"></i> Analytics</a></li>
+                <li>
+                    <button class="btn-circle" id="themeToggleBtn" title="Toggle Theme" style="margin-left: 0.5rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); color: var(--text-muted); cursor: pointer; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all var(--transition-speed) ease;">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </li>
+                <li>
+                    <a href="upload.html" class="btn-upload-nav" id="uploadLink">
+                        <i class="fas fa-cloud-upload-alt"></i> Upload
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </header>
+
+    <!-- Analytics Dashboard Container -->
+    <main class="browser-layout" style="grid-template-columns: 1fr; gap: 2.5rem; max-width:1200px;" id="dashboardMain">
+        
+        <!-- Page Header -->
+        <div class="browser-header" style="padding: 2.5rem 3rem;" id="dashHeader">
+            <h2 style="font-size: 2.2rem; display:flex; align-items:center; gap:1rem; margin-bottom:0.5rem;">
+                <i class="fas fa-chart-line" style="color:var(--primary);"></i> Academic Analytics
+            </h2>
+            <p style="color:var(--text-muted);">Real-time resource counts, semester-wise syllabus coverage, subject distributions, and community usage tracking.</p>
+        </div>
+
+        <!-- 4 Stats Cards Grid -->
+        <div class="stats-grid" style="padding: 0; background:none; border:none; box-shadow:none; gap:1.5rem;" id="dashStatsGrid">
+            <div class="dash-card" style="text-align: center; border-right:none; height:100%;">
+                <span class="stat-number" style="color:var(--primary); font-size:2.8rem;" id="totalResourcesDash">0+</span>
+                <span class="stat-label" style="font-size:0.8rem;">Cumulative Files</span>
+            </div>
+            <div class="dash-card" style="text-align: center; border-right:none; height:100%;">
+                <span class="stat-number" style="color:var(--secondary); font-size:2.8rem;" id="totalNotesDash">0+</span>
+                <span class="stat-label" style="font-size:0.8rem;">Lecture Handouts</span>
+            </div>
+            <div class="dash-card" style="text-align: center; border-right:none; height:100%;">
+                <span class="stat-number" style="color:var(--accent-purple); font-size:2.8rem;" id="totalPapersDash">0+</span>
+                <span class="stat-label" style="font-size:0.8rem;">Previous Papers</span>
+            </div>
+            <div class="dash-card" style="text-align: center; border-right:none; height:100%;">
+                <span class="stat-number" style="color:#fbbf24; font-size:2.8rem;" id="totalDownloadsDash">0+</span>
+                <span class="stat-label" style="font-size:0.8rem;">Total Downloads</span>
+            </div>
+        </div>
+
+        <!-- Charts Split Section -->
+        <div class="dash-chart-section" id="dashChartSection">
+            
+            <!-- Semeters Coverage -->
+            <div class="dash-card">
+                <h3 style="font-size:1.2rem; margin-bottom:2rem; display:flex; align-items:center; gap:0.6rem;"><i class="fas fa-layer-group" style="color:var(--primary);"></i> Semester-wise Syllabus Mappings</h3>
+                <div class="stat-bar-container" id="semesterStatsBars">
+                    <!-- Programmatically rendered by script.js -->
+                </div>
+            </div>
+
+            <!-- Subject Category Breakdown -->
+            <div class="dash-card">
+                <h3 style="font-size:1.2rem; margin-bottom:2rem; display:flex; align-items:center; gap:0.6rem;"><i class="fas fa-brain" style="color:var(--secondary);"></i> Popular Core Branches</h3>
+                <div class="stat-bar-container" id="subjectStatsBars">
+                    <!-- Programmatically rendered by script.js -->
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Most Popular Resources Lists Tables -->
+        <div class="dash-chart-section" style="margin-bottom:0;" id="dashTablesSection">
+            
+            <!-- Popular Notes Table -->
+            <div class="dash-card">
+                <h3 style="font-size:1.2rem; margin-bottom:1.5rem; display:flex; align-items:center; gap:0.6rem;"><i class="fas fa-book-open" style="color:var(--secondary);"></i> Most Popular Lecture Handouts</h3>
+                <div class="dash-table-wrapper">
+                    <table class="dash-table">
+                        <thead>
+                            <tr>
+                                <th>Resource Title</th>
+                                <th>Subject</th>
+                                <th style="text-align:right;">Downloads</th>
+                            </tr>
+                        </thead>
+                        <tbody id="popularNotesTableBody">
+                            <!-- Programmatically rendered by script.js -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Popular Papers Table -->
+            <div class="dash-card">
+                <h3 style="font-size:1.2rem; margin-bottom:1.5rem; display:flex; align-items:center; gap:0.6rem;"><i class="fas fa-file-invoice" style="color:var(--accent-purple);"></i> Most Popular Exam Papers</h3>
+                <div class="dash-table-wrapper">
+                    <table class="dash-table">
+                        <thead>
+                            <tr>
+                                <th>Question Paper</th>
+                                <th>Subject</th>
+                                <th style="text-align:right;">Downloads</th>
+                            </tr>
+                        </thead>
+                        <tbody id="popularPapersTableBody">
+                            <!-- Programmatically rendered by script.js -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Footer Area -->
+    <footer id="footerSection">
+        <div class="footer-container">
+            <div class="footer-info">
+                <h4><i class="fas fa-brain"></i> GJU AI&DS Hub</h4>
+                <p>An elite community repository designed to empower students of Guru Jambheshwar University, Hisar under the Artificial Intelligence & Data Science (AI & DS) Engineering branch.</p>
+                <div class="social-links">
+                    <a href="#" class="social-btn" aria-label="Github Link"><i class="fab fa-github"></i></a>
+                    <a href="#" class="social-btn" aria-label="LinkedIn Link"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#" class="social-btn" aria-label="Telegram Community"><i class="fab fa-telegram-plane"></i></a>
+                </div>
+                <a href="admin-login.html" class="admin-nav-link" style="color:var(--text-muted); font-size:0.8rem; margin-top:1.2rem; display:inline-flex; align-items:center; gap:0.4rem; border:1px solid rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:30px; background:rgba(255,255,255,0.02); transition:all var(--transition-speed) ease;"><i class="fas fa-user-shield" style="color:var(--primary);"></i> Admin Portal</a>
+            </div>
+            <div class="footer-links">
+                <h5>Lower Semesters</h5>
+                <ul>
+                    <li><a href="notes.html?semester=1">Semester 1</a></li>
+                    <li><a href="notes.html?semester=2">Semester 2</a></li>
+                    <li><a href="notes.html?semester=3">Semester 3</a></li>
+                </ul>
+            </div>
+            <div class="footer-links">
+                <h5>Higher Semesters</h5>
+                <ul>
+                    <li><a href="notes.html?semester=4">Semester 4</a></li>
+                    <li><a href="notes.html?semester=5">Semester 5</a></li>
+                    <li><a href="notes.html?semester=6">Semester 6</a></li>
+                </ul>
+            </div>
+            <div class="footer-links">
+                <h5>Branch Core</h5>
+                <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 0.5rem;">
+                    <strong>Department:</strong> Computer Science & Engineering Division
+                </p>
+                <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;">
+                    <strong>Affiliation:</strong> Guru Jambheshwar University of Science & Technology, Hisar, Haryana.
+                </p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 GJU AI&DS Resource Hub. Designed with visual excellence.</p>
+            <p>Made by students, for students.</p>
+        </div>
+    </footer>
+
+    <!-- Core Database & App Handler Scripts -->
+    <script src="js/script.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            initNavbar();
+            initDashboardPage();
+        });
+    </script>
+</body>
+</html>
